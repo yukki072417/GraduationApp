@@ -1,183 +1,127 @@
-//
-//  MedicineRegistrationView.swift
-//  KIMERO_OKUSURI_CALENDAR
-//
-//  Created by clark on 2025/06/30.
-//
-
 
 import SwiftUI
 
 struct MedicineRegistrationView: View {
-    @EnvironmentObject private var medicineManager: MedicineManager
-    @EnvironmentObject private var notificationManager: NotificationManager
-    @State private var showingAddMedicine = false
-    
+    @EnvironmentObject var medicineManager: MedicineManager
+    @State private var isShowingAddSheet = false
+
     var body: some View {
         NavigationView {
             VStack {
                 if medicineManager.medicines.isEmpty {
-                    VStack(spacing: 20) {
-                        Image(systemName: "pills.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        
-                        Text("登録されたお薬がありません")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                        
-                        Text("「+」ボタンからお薬を登録してください")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Text("登録された薬はありません。")
+                        .foregroundColor(.gray)
                 } else {
                     List {
                         ForEach(medicineManager.medicines) { medicine in
-                            MedicineRowView(medicine: medicine)
+                            VStack(alignment: .leading) {
+                                Text(medicine.name).font(.headline)
+                                Text(formatSchedule(weekdays: medicine.notificationWeekdays, time: medicine.notificationTime))
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
                         }
                         .onDelete(perform: deleteMedicine)
                     }
                 }
             }
-            .navigationTitle("お薬登録")
-            .navigationBarItems(trailing:
-                Button(action: { showingAddMedicine = true }) {
-                    Image(systemName: "plus")
+            .navigationTitle("薬の登録")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { isShowingAddSheet = true }) {
+                        Image(systemName: "plus")
+                    }
                 }
-            )
-            .sheet(isPresented: $showingAddMedicine) {
+            }
+            .sheet(isPresented: $isShowingAddSheet) {
                 AddMedicineView()
+                    .environmentObject(medicineManager)
             }
         }
     }
-    
-    private func deleteMedicine(offsets: IndexSet) {
-        for index in offsets {
-            let medicine = medicineManager.medicines[index]
-            medicineManager.deleteMedicine(medicine)
-        }
-        // 通知を再スケジュール
-        notificationManager.scheduleRegularNotifications(for: medicineManager.medicines)
-    }
-}
 
-struct MedicineRowView: View {
-    let medicine: Medicine
+    private func deleteMedicine(at offsets: IndexSet) {
+        medicineManager.deleteMedicine(at: offsets)
+        NotificationManager.shared.scheduleNotifications(for: medicineManager.medicines)
+    }
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(medicine.name)
-                .font(.headline)
-            
-            HStack {
-                Text("服用時間: \(medicine.timeString)")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                Spacer()
-                
-                if medicine.isActive {
-                    Text("有効")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
-                } else {
-                    Text("無効")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.gray)
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
-                }
-            }
-        }
-        .padding(.vertical, 4)
+    private func formatSchedule(weekdays: [Int], time: DateComponents) -> String {
+        let weekdaySymbols = Calendar.current.shortWeekdaySymbols
+        let sortedWeekdays = weekdays.sorted()
+        let days = sortedWeekdays.map { weekdaySymbols[$0 - 1] }.joined(separator: ", ")
+        let hour = time.hour ?? 0
+        let minute = time.minute ?? 0
+        return String(format: "%@ %02d:%02d", days, hour, minute)
     }
 }
 
 struct AddMedicineView: View {
-    @EnvironmentObject private var medicineManager: MedicineManager
-    @EnvironmentObject private var notificationManager: NotificationManager
-    @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var medicineManager: MedicineManager
+    @Environment(\.dismiss) var dismiss
     
-    @State private var medicineName = ""
-    @State private var selectedHour = 8
-    @State private var selectedMinute = 0
-    @State private var isActive = true
+    @State private var name = ""
+    @State private var notificationTime = Date()
+    @State private var selectedWeekdays = [Int]()
     
+    private let weekdays = ["日", "月", "火", "水", "木", "金", "土"]
+
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("お薬情報")) {
-                    TextField("お薬の名前", text: $medicineName)
+                Section(header: Text("薬の情報")) {
+                    TextField("薬の名前", text: $name)
+                }
+                
+                Section(header: Text("通知設定")) {
+                    DatePicker("時間", selection: $notificationTime, displayedComponents: .hourAndMinute)
                     
-                    Toggle("有効にする", isOn: $isActive)
-                }
-                
-                Section(header: Text("服用時間")) {
-                    HStack {
-                        Text("時間")
-                        Spacer()
-                        Picker("時", selection: $selectedHour) {
-                            ForEach(0..<24) { hour in
-                                Text("\(hour)時").tag(hour)
+                    VStack(alignment: .leading) {
+                        Text("曜日").font(.headline)
+                        HStack(spacing: 10) {
+                            ForEach(1...7, id: \.self) { weekday in
+                                Text(weekdays[weekday - 1])
+                                    .font(.subheadline)
+                                    .frame(width: 35, height: 35)
+                                    .foregroundColor(selectedWeekdays.contains(weekday) ? .white : .blue)
+                                    .background(selectedWeekdays.contains(weekday) ? Color.blue : Color.white)
+                                    .clipShape(Circle())
+                                    .overlay(
+                                        Circle().stroke(Color.blue, lineWidth: 1)
+                                    )
+                                    .onTapGesture {
+                                        toggleWeekday(weekday)
+                                    }
                             }
                         }
-                        .pickerStyle(WheelPickerStyle())
-                        .frame(width: 100)
-                        
-                        Picker("分", selection: $selectedMinute) {
-                            ForEach(0..<60) { minute in
-                                Text("\(minute)分").tag(minute)
-                            }
-                        }
-                        .pickerStyle(WheelPickerStyle())
-                        .frame(width: 100)
-                    }
-                }
-                
-                Section {
-                    HStack {
-                        Text("設定時間")
-                        Spacer()
-                        Text(String(format: "%02d:%02d", selectedHour, selectedMinute))
-                            .font(.title2)
-                            .fontWeight(.bold)
                     }
                 }
             }
-            .navigationTitle("お薬を追加")
+            .navigationTitle("薬を追加")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("キャンセル") {
-                    presentationMode.wrappedValue.dismiss()
-                },
-                trailing: Button("保存") {
-                    saveMedicine()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("キャンセル") { dismiss() }
                 }
-                .disabled(medicineName.isEmpty)
-            )
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") { saveMedicine() }
+                        .disabled(name.isEmpty || selectedWeekdays.isEmpty)
+                }
+            }
+        }
+    }
+    
+    private func toggleWeekday(_ weekday: Int) {
+        if let index = selectedWeekdays.firstIndex(of: weekday) {
+            selectedWeekdays.remove(at: index)
+        } else {
+            selectedWeekdays.append(weekday)
         }
     }
     
     private func saveMedicine() {
-        let medicine = Medicine(
-            name: medicineName,
-            hour: selectedHour,
-            minute: selectedMinute,
-            isActive: isActive
-        )
-        
-        medicineManager.addMedicine(medicine)
-        
-        // 通知をスケジュール
-        notificationManager.scheduleRegularNotifications(for: medicineManager.medicines)
-        
-        presentationMode.wrappedValue.dismiss()
+        let timeComponents = Calendar.current.dateComponents([.hour, .minute], from: notificationTime)
+        medicineManager.addMedicine(name: name, weekdays: selectedWeekdays, time: timeComponents)
+        NotificationManager.shared.scheduleNotifications(for: medicineManager.medicines)
+        dismiss()
     }
 }

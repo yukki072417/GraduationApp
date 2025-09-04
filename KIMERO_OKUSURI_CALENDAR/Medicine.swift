@@ -1,37 +1,18 @@
 import Foundation
-import UIKit
 
-// 薬の情報を保持するモデル
-struct Medicine: Identifiable, Codable {
-    let id = UUID()
-    let name: String
-    let hour: Int
-    let minute: Int
-    let isActive: Bool
-    
-    var timeString: String {
-        return String(format: "%02d:%02d", hour, minute)
-    }
+// 薬の情報を定義する構造体
+struct Medicine: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var name: String
+    // 通知する曜日 (1:日曜, 2:月曜, ..., 7:土曜)
+    var notificationWeekdays: [Int]
+    // 通知する時間
+    var notificationTime: DateComponents
 }
 
-// 薬を飲んだ記録を保持するモデル
-struct MedicineRecord: Identifiable, Codable {
-    let id = UUID()
-    let medicineId: UUID
-    let medicineName: String
-    let date: Date
-    let photoData: Data?
-    
-    var uiImage: UIImage? {
-        guard let data = photoData else { return nil }
-        return UIImage(data: data)
-    }
-}
-
-// 通知のためのモデル
-struct PendingMedicine: Identifiable {
-    let id = UUID()
-    let medicine: Medicine
-    let scheduledTime: Date
-    let isPhotoTaken: Bool
+// 薬の服用記録を定義する構造体
+struct MedicineTakenRecord: Identifiable, Codable, Hashable {
+    var id = UUID()
+    var medicineId: UUID
+    var date: Date
 }

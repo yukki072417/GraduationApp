@@ -34,33 +34,9 @@
 		4BCF04842E1235D800B1CC4B /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		4B62B2502E1203DD008E802B /* Exceptions for "KIMERO_OKUSURI_CALENDAR" folder in "KIMERO_OKUSURI_CALENDAR" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				AppDelegate.swift,
-			);
-			target = 4B62B2122E11FB54008E802B /* KIMERO_OKUSURI_CALENDAR */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		4B62B2512E1203DD008E802B /* Exceptions for "KIMERO_OKUSURI_CALENDAR" folder in "Copy Bundle Resources" phase from "KIMERO_OKUSURI_CALENDAR" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 4B62B2112E11FB54008E802B /* Resources */;
-			membershipExceptions = (
-				AppDelegate.swift,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		4B62B2152E11FB54008E802B /* KIMERO_OKUSURI_CALENDAR */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				4B62B2502E1203DD008E802B /* Exceptions for "KIMERO_OKUSURI_CALENDAR" folder in "KIMERO_OKUSURI_CALENDAR" target */,
-				4B62B2512E1203DD008E802B /* Exceptions for "KIMERO_OKUSURI_CALENDAR" folder in "Copy Bundle Resources" phase from "KIMERO_OKUSURI_CALENDAR" target */,
-			);
 			path = KIMERO_OKUSURI_CALENDAR;
 			sourceTree = "<group>";
 		};
